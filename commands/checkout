@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+BRANCH=issue-$1
+if (git branch --list $BRANCH | wc -l | grep -q 1); then
+	git checkout $BRANCH
+else
+	if (git branch -r --list origin/$BRANCH | wc -l | grep -q 1); then
+		git checkout -b $BRANCH origin/$BRANCH
+	else
+		if ! (ghi show $1 >/dev/null 2>&1); then
+			echo "There is no issue number $1." 1>&2
+			exit 1;
+		fi
+		git checkout --quiet master && git pull --quiet --ff-only upstream master && git checkout -b $BRANCH;
+	fi
+fi

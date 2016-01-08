@@ -1,0 +1,30 @@
+#!/bin/bash -e
+
+MESSAGE="
+# Please explain the issue. The first line will become the title. Trailing
+# lines starting with '#' (like these) will be ignored, and empty messages will
+# not be submitted. Issues are formatted with GitHub Flavored Markdown (GFM):
+#
+#   http://github.github.com/github-flavored-markdown";
+
+if [ "" == "$1" ]; then
+	MESSAGE=$(echo "$MESSAGE" | vipe | grep -v '^#');
+	if [ "" == "$MESSAGE" ]; then
+		echo "No message provided" 1>&2
+		exit 1
+	fi
+else
+	MESSAGE="$@"
+fi
+# Workaround for https://github.com/stephencelis/ghi/issues/81
+if [[ "$MESSAGE" =~ ^[0-9]+$ ]]; then
+	MESSAGE=$MESSAGE" "
+fi
+OUTPUT=$(ghi open -m "$MESSAGE" 2>&1 || echo '');
+ISSUE=$(echo "$OUTPUT" | head -n 1 | perl -pe 's/#([0-9]+):.*/$1/')
+if ! [[ "$ISSUE" =~ ^[0-9]+$ ]]; then
+	echo "$OUTPUT" 1>&2
+	exit 1
+fi
+echo "Created issue $ISSUE"
+$(dirname $0)/checkout $ISSUE

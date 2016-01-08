@@ -1,0 +1,42 @@
+#!/bin/bash -e
+
+echoerr() {
+	echo "$@" 1>&2;
+}
+COMMAND=$1
+if [ `uname` == 'Darwin' ]; then
+	script=$(greadlink -f "$0")
+else
+	script=$(readlink -f "$0")
+fi
+DIR_ROOT=$(dirname $script)/
+if ! (test -e $DIR_ROOT"commands/"$COMMAND); then
+	echoerr "Invalid command '$COMMAND'.";
+	COMMAND="";
+fi
+
+if [ "" == "$COMMAND" ]; then
+	echoerr "usage: gi <command>";
+	echoerr;
+	echoerr "Commands:";
+	echoerr "  list [<username>|me]      Lists repo's issues (assigned to user if provided)";
+	echoerr "  open [<message>]          Open a new issue"
+	echoerr "  checkout <issue-number>   Check out branch for specified issue, create it if needed";
+	echoerr "  details                   Show current branch-issue's details";
+	echoerr "  browse                    Open current branch-issue in web browser";
+	echoerr "  comment [<message>]       Add comment to current branch-issue";
+	echoerr "  push                      Push current branch-issue to origin";
+	echoerr "  pull-request [<target>]   Create a pull-request with the current branch-issue";
+	exit 1;
+fi
+
+if ! (git remote 2>/dev/null 1>/dev/null); then
+	echoerr "Not a git repository";
+	exit 1;
+fi
+if ! (git remote | grep -q '^upstream$'); then
+	echoerr "No upstream remote configured. Please add it using git:";
+	echoerr "  use (git remote add upstream <url>)";
+	exit 1;
+fi
+$DIR_ROOT"commands/"$@
